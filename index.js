@@ -28,7 +28,7 @@ devices.on('device-activated', event => {
         });
 
         card.on('response-received', event => {
-            // console.log(event.command);
+            console.log(event.command);
             // console.log(event.card);
             // console.log(event.response.meaning());
             // console.log(event.response.isOk());
@@ -71,11 +71,26 @@ devices.on('device-activated', event => {
             console.error(error);
         });//end Set Information
 
-
+        // console.log(new CommandApdu(0,0,0,10,10,10));
         //Read Information
-        card.issueCommand(new CommandApdu({bytes: [0xCC,0x06,0x00,0x00,
+
+        let read = new CommandApdu({bytes: [0xCC,0x06,0x00,0x00,
             0xFA0
-        ]}))
+        ]})
+
+        // console.log('aaa');
+        // console.log(read);
+        console.log('aaa');
+        let a = new CommandApdu({
+            cla:204,
+            ins:6,
+            p1:0,
+            p2:0,
+            le:4000
+        })
+        console.log(a)
+
+        card.issueCommand(a)
         .then((response) => {
             // console.log(response.toString('base64').length)
             console.log('response length is '+response.length);
@@ -119,7 +134,7 @@ devices.on('device-activated', event => {
             console.log(`Application Selected ${event.application}`);
         });
     });
-    
+
 	//This event will fire once card is removed
 	device.on('card-removed', event => {
         console.log(`Card ${event.card} removed from '${event.name}' `);
