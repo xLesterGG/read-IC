@@ -28,12 +28,15 @@ devices.on('device-activated', event => {
         });
 
         card.on('response-received', event => {
-            console.log(event.command);
+            // console.log(event.command);
             // console.log(event.card);
             // console.log(event.response.meaning());
             // console.log(event.response.isOk());
-            console.log('response-recieved length is '+event.response.buffer.length);
-            console.log(event.response.hasMoreBytesAvailable());
+
+            // console.log(event.response.correctLength());
+            // console.log(event.response.getStatusCode());
+            // console.log('response-recieved length is '+event.response.buffer.length);
+            // console.log(event.response.hasMoreBytesAvailable());
             // console.log(`Response '${event.response}' received from '${event.card}' in response to '${event.command}'`);  //The card will reply to the command issued and this event will fire (for debugging)
         });
         /*Mykad reading operation starts here. See attached documentation for elaborate explanation*/
@@ -46,9 +49,6 @@ devices.on('device-activated', event => {
             console.error(error);
         });
 
-
-
-
         card.issueCommand(new CommandApdu({bytes: [0xC8,0x32,0x00,0x00,0x05,0x08,0x00,0x00, //Set Length
             0xFA0,0x00
         ]}))
@@ -57,8 +57,6 @@ devices.on('device-activated', event => {
         }).catch((error) => {
          console.error(error);
         });//end Set Length
-
-
 
         card.issueCommand(new CommandApdu({bytes: [0xCC,0x00,0x00,0x00,0x08, //Set Information
             0x02,0x00,0x01,0x00,
@@ -80,7 +78,7 @@ devices.on('device-activated', event => {
 
         // console.log('aaa');
         // console.log(read);
-        console.log('aaa');
+        // console.log('aaa');
         let a = new CommandApdu({
             cla:204,
             ins:6,
@@ -88,12 +86,12 @@ devices.on('device-activated', event => {
             p2:0,
             le:4000
         })
-        console.log(a)
+        // console.log(a)
 
         card.issueCommand(a)
         .then((response) => {
             // console.log(response.toString('base64').length)
-            console.log('response length is '+response.length);
+            // console.log('response length is '+response.length);
             sharp(response)
             .toFile('sharp.jpeg', (err, info) => {
                 if(err)
