@@ -31,10 +31,10 @@ devices.on('device-activated', event => {
             // console.log(event.command);
             // console.log(event.card);
             // console.log(event.response.meaning());
+            // console.log(event.response.getStatusCode());
             // console.log(event.response.isOk());
 
             // console.log(event.response.correctLength());
-            // console.log(event.response.getStatusCode());
             // console.log('response-recieved length is '+event.response.buffer.length);
             // console.log(event.response.hasMoreBytesAvailable());
             // console.log(`Response '${event.response}' received from '${event.card}' in response to '${event.command}'`);  //The card will reply to the command issued and this event will fire (for debugging)
@@ -46,98 +46,168 @@ devices.on('device-activated', event => {
             0x4A,0x50,0x4E,
             0x00,0x10
         ]})) //Select Application
-        .then((response) => {
-         // console.log(`Response '${response.toString('hex')}`);
-        }).catch((error) => {
-            console.error(error);
-        });
 
-        card.issueCommand(new CommandApdu({bytes: [0xC8,0x32,0x00,0x00,0x05,0x08,0x00,0x00, //Set Length
-            0xFF,0x00
-        ]}))
-        .then((response) => {
-         // console.log(`Response '${response.toString('hex')}`);
-        }).catch((error) => {
-         console.error(error);
-        });//end Set Length
+
+        let xx = [];
 
 
         let x = 0
         let hxx = ''
         let xy = []
 
-        for(let z = 0; z<15;z++){
-            // console.log(x);
+        let a = new CommandApdu({
+            cla:204,
+            ins:6,
+            p1:0,
+            p2:0,
+            le:0xFA
+        })
+
+
+        getHex(0)
+
+        function getHex(offset){
+
+            card.issueCommand(new CommandApdu({bytes: [0xC8,0x32,0x00,0x00,0x05,0x08,0x00,0x00, //Set Length
+                0xFA,0x00
+            ]}))//end Set Length
+
             card.issueCommand(new CommandApdu({bytes: [0xCC,0x00,0x00,0x00,0x08, //Set Information
                 0x02,0x00,0x01,0x00,
-                x+3,0x00,
-                0xFF,0x00
+                offset+3,0x00,
+                0xFA,0x00
             ]}))
-            .then((response) => {
-                console.log(x);
-                x=x+256
+            .then(() => {
 
-            }).catch((error) => {
-                console.error(error);
-            });//end Set Information
+                card.issueCommand(a)
+                .then((response) => {
+                    // xx.push(response)
+                    // console.log(offset);
+                    hxx= hxx+ response.toString('hex').slice(0, -4)
+                    xx.push(new Buffer.from(response.toString('hex').slice(0, -4), "hex"))
 
-            let a = new CommandApdu({
-                cla:204,
-                ins:6,
-                p1:0,
-                p2:0,
-                le:0xFF
+                    if(offset == 3750){
+                        console.log(response.toString('hex')); // I get bytes here
+                        console.log('currently ' + offset + ' to ' + (offset+250));
+                    }
+
+                    // console.log(response);
+
+                    if(offset<=3500){
+                        if(offset==3750){
+                            console.log('aaaa');
+                            getHex(offset+100)
+                        }else{
+                            getHex(offset+250)
+                        }
+                    }else{
+                        doPicture()
+                    }
+                }) //end Read Information
             })
-
-            card.issueCommand(a)
-            .then((response) => {
-                hxx= hxx+ response.toString('hex').replace('9000','')
-                xy.push(z)
-                console.log(xy);
-
-            }).catch((error) => {
-                console.error(error);
-            }); //end Read Information
         }
 
-        setTimeout(function() {
-            card.issueCommand(new CommandApdu({bytes: [0xCC,0x00,0x00,0x00,0x08, //Set Information
-                0x02,0x00,0x01,0x00,
-                3843,0x00,
-                0xFF,0x00
-            ]}))
-            .then((response) => {
 
-            }).catch((error) => {
-                console.error(error);
-            });//end Set Information
+        function doPicture(){
+            // console.log(hxx);
 
-            let a = new CommandApdu({
-                cla:204,
-                ins:6,
-                p1:0,
-                p2:0,
-                le:0xFF
-            })
+        //     fs.writeFile('./pic.jpeg',Buffer.concat(xx),(err)=>{
+        //    if(!err)
+        //        // console.log('saved');
+        //        console.log(__dirname+'\pic.jpeg');
+        // })
+        //
+        //     sharp(Buffer.concat(xx))
+        //     .toFile('sharp.jpeg', (err, info) => {
+        //         if(err)
+        //         console.log(err);
+        //
+        //         if(info)
+        //         console.log(info);
+        //     });
 
-            card.issueCommand(a)
-            .then((response) => {
-                hxx= hxx+ response.toString('hex').replace('9000','')
+            sharp(new Buffer.from(hxx, "hex"))
+              .toFile('sharp.jpeg', (err, info) => {
+                  if(err)
+                  console.log(err);
 
-                sharp(Buffer.from(hxx, "hex"))
-                .toFile('sharp.jpeg', (err, info) => {
-                    if(err)
-                    console.log(err);
+                  if(info)
+                  console.log(info);
+              });
+        }
 
-                    if(info)
-                    console.log(info);
-                });
 
-            }).catch((error) => {
-                console.error(error);
-            }); //end Read Information
+        // hxx= hxx+ response.toString('hex').replace('9000','')
+        // xy.push(offset)
+        // // console.log(xy);
+        //
 
-        }, 5000);
+        // function getLast(){
+        //     card.issueCommand(new CommandApdu({bytes: [0xCC,0x00,0x00,0x00,0x08, //Set Information
+        //         0x02,0x00,0x01,0x00,
+        //         3845+3,0x00,
+        //         0xFF,0x00
+        //     ]}))
+        //
+        //     let a = new CommandApdu({
+        //         cla:204,
+        //         ins:6,
+        //         p1:0,
+        //         p2:0,
+        //         le:0xA0
+        //     })
+        //
+        //     card.issueCommand(a)
+        //     .then((response) => {
+        //         hxx= hxx+ response.toString('hex').replace('9000','')
+        //         // console.log(response.toString('hex'));
+        //
+        //     }).catch((error) => {
+        //         console.error(error);
+        //     }); //end Read Information
+        // }
+
+
+
+
+        // setTimeout(function() {
+        //     card.issueCommand(new CommandApdu({bytes: [0xCC,0x00,0x00,0x00,0x08, //Set Information
+        //         0x02,0x00,0x01,0x00,
+        //         3843,0x00,
+        //         0xFF,0x00
+        //     ]}))
+        //     .then((response) => {
+        //
+        //     }).catch((error) => {
+        //         console.error(error);
+        //     });//end Set Information
+        //
+        //     let a = new CommandApdu({
+        //         cla:204,
+        //         ins:6,
+        //         p1:0,
+        //         p2:0,
+        //         le:0xFF
+        //     })
+        //
+        //     card.issueCommand(a)
+        //     .then((response) => {
+        //         hxx= hxx+ response.toString('hex').replace('9000','')
+        //
+        //         sharp(Buffer.from(hxx, "hex"))
+        //         .toFile('sharp.jpeg', (err, info) => {
+        //             if(err)
+        //             console.log(err);
+        //
+        //             if(info)
+        //             console.log(info);
+        //         });
+        //
+        //     }).catch((error) => {
+        //         console.error(error);
+        //     }); //end Read Information
+        //
+        // }, 5000);
 
         // console.log(response.toString('hex').replace('9000',''))
         // console.log('asdasd');
