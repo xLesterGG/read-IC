@@ -42,7 +42,10 @@ devices.on('device-activated', event => {
         /*Mykad reading operation starts here. See attached documentation for elaborate explanation*/
 
 
-        card.issueCommand(new CommandApdu({bytes: [0x00,0xA4,0x04,0x00,0x0A,0xA0,0x00,0x00,0x00,0x74,0x4A,0x50,0x4E,0x00,0x10]})) //Select Application
+        card.issueCommand(new CommandApdu({bytes: [0x00,0xA4,0x04,0x00,0x0A,0xA0,0x00,0x00,0x00,0x74,
+            0x4A,0x50,0x4E,
+            0x00,0x10
+        ]})) //Select Application
         .then((response) => {
          // console.log(`Response '${response.toString('hex')}`);
         }).catch((error) => {
@@ -50,7 +53,7 @@ devices.on('device-activated', event => {
         });
 
         card.issueCommand(new CommandApdu({bytes: [0xC8,0x32,0x00,0x00,0x05,0x08,0x00,0x00, //Set Length
-            0xFA0,0x00
+            0xFF,0x00
         ]}))
         .then((response) => {
          // console.log(`Response '${response.toString('hex')}`);
@@ -58,72 +61,105 @@ devices.on('device-activated', event => {
          console.error(error);
         });//end Set Length
 
-        card.issueCommand(new CommandApdu({bytes: [0xCC,0x00,0x00,0x00,0x08, //Set Information
-            0x02,0x00,0x01,0x00,
-            0x03,0x00,
-            0xFA0,0x00
-        ]}))
-        .then((response) => {
-             // console.log(`Response '${response.toString('hex')}`);
-        }).catch((error) => {
-            console.error(error);
-        });//end Set Information
 
-        // console.log(new CommandApdu(0,0,0,10,10,10));
-        //Read Information
+        let x = 0
+        let hxx = ''
+        let xy = []
 
-        let read = new CommandApdu({bytes: [0xCC,0x06,0x00,0x00,
-            0xFA0
-        ]})
+        for(let z = 0; z<15;z++){
+            // console.log(x);
+            card.issueCommand(new CommandApdu({bytes: [0xCC,0x00,0x00,0x00,0x08, //Set Information
+                0x02,0x00,0x01,0x00,
+                x+3,0x00,
+                0xFF,0x00
+            ]}))
+            .then((response) => {
+                console.log(x);
+                x=x+256
 
-        // console.log('aaa');
-        // console.log(read);
-        // console.log('aaa');
-        let a = new CommandApdu({
-            cla:204,
-            ins:6,
-            p1:0,
-            p2:0,
-            le:4000
-        })
-        // console.log(a)
+            }).catch((error) => {
+                console.error(error);
+            });//end Set Information
 
-        card.issueCommand(a)
-        .then((response) => {
-            // console.log(response.toString('base64').length)
-            // console.log('response length is '+response.length);
-            sharp(response)
-            .toFile('sharp.jpeg', (err, info) => {
-                if(err)
-                console.log(err);
+            let a = new CommandApdu({
+                cla:204,
+                ins:6,
+                p1:0,
+                p2:0,
+                le:0xFF
+            })
 
-                if(info)
-                console.log(info);
-            });
+            card.issueCommand(a)
+            .then((response) => {
+                hxx= hxx+ response.toString('hex').replace('9000','')
+                xy.push(z)
+                console.log(xy);
 
-            // fs.writeFile('image.jpg',response,() => {
-            //
-            // })
+            }).catch((error) => {
+                console.error(error);
+            }); //end Read Information
+        }
 
-            // console.log(response.toJSON());
-            // console.log(response.toString());
-            // console.log(response.toString('hex'));
-            // console.log(response.toString('base64'));
-            // console.log(response.toString('base64').length)
+        setTimeout(function() {
+            card.issueCommand(new CommandApdu({bytes: [0xCC,0x00,0x00,0x00,0x08, //Set Information
+                0x02,0x00,0x01,0x00,
+                3843,0x00,
+                0xFF,0x00
+            ]}))
+            .then((response) => {
+
+            }).catch((error) => {
+                console.error(error);
+            });//end Set Information
+
+            let a = new CommandApdu({
+                cla:204,
+                ins:6,
+                p1:0,
+                p2:0,
+                le:0xFF
+            })
+
+            card.issueCommand(a)
+            .then((response) => {
+                hxx= hxx+ response.toString('hex').replace('9000','')
+
+                sharp(Buffer.from(hxx, "hex"))
+                .toFile('sharp.jpeg', (err, info) => {
+                    if(err)
+                    console.log(err);
+
+                    if(info)
+                    console.log(info);
+                });
+
+            }).catch((error) => {
+                console.error(error);
+            }); //end Read Information
+
+        }, 5000);
+
+        // console.log(response.toString('hex').replace('9000',''))
+        // console.log('asdasd');
+        // console.log('response length is '+response.length);
 
 
-         // console.log(`Response '${response.toString()}'`);
-         // fs.writeFile('./pic.jpeg', new Buffer(response.toString(),'binary'),(err)=>{
-         //    if(!err)
-         //        // console.log('saved');
-         //        console.log(__dirname+'\pic.jpeg');
-         // })
-
-        }).catch((error) => {
-            console.error(error);
-        }); //end Read Information
 
 
+
+
+
+
+        // let read = new CommandApdu({bytes: [0xCC,0x06,0x00,0x00,
+        //     0xFF
+        // ]})//Read Information
+
+
+        // console.log(response.toJSON());
+        // console.log(response.toString());
+        // console.log(response.toString('hex'));
+        // console.log(response.toString('base64'));
+        // console.log(response.toString('base64').length)
 
         const application = new Iso7816Application(card);
 
